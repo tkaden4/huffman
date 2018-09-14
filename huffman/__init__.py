@@ -1,6 +1,7 @@
 import heapq as hq
 from dataclasses import dataclass, field
 from typing import Any
+from BitVector.BitVector import BitVector
 
 
 @dataclass(order=True)
@@ -14,6 +15,14 @@ class HuffmanNode:
     __repr__ = __str__
 
 
+@dataclass
+class EncodedData:
+    data: str
+    table: dict
+    tree: HuffmanNode
+
+
+# Create a table of frequencies for all items in iterable
 def frequencies(iterable):
     freq_table = {}
     for elem in iterable:
@@ -26,8 +35,6 @@ def frequencies(iterable):
 
 # Build a huffman tree
 # All leaves are characters
-
-
 def huffman_tree(frequencies):
     heap = []
     # Build a priority queue of characters and their frequencies
@@ -44,9 +51,12 @@ def huffman_tree(frequencies):
         b = hq.heappop(heap)
         new_node = HuffmanNode(priority=a.priority + b.priority, item=(a, b))
         hq.heappush(heap, new_node)
+
+    # heap[0] is the root node
     return heap[0]
 
 
+# Create a translation table for symbols to codes
 def translation_table(huffman_tree):
     if isinstance(huffman_tree.item, str):
         return {huffman_tree.item: [1]}
@@ -61,18 +71,23 @@ def translation_table(huffman_tree):
             right = node_table_r(right, path_so_far + [1])
             return {**left, **right}
         else:
-            raise Exception("Internal error")
+            raise Exception("Internal error: item is not valid")
 
     return node_table_r(huffman_tree, [])
 
 
+# Encode a raw stream of data
 def encode(raw_data):
     freqs = frequencies(raw_data)
     htree = huffman_tree(freqs)
     table = translation_table(htree)
-    # TODO translate raw data
-    return table
+    bitdata = [bit for bits in map(
+        lambda x: table[x], raw_data) for bit in bits]
+    return EncodedData(data=bitdata, table=table, tree=htree)
 
 
+# Decode an encoded data stream
 def decode(encoded_data):
+    tree = encoded_data.tree
+    data = encoded_data.data
     raise NotImplementedError()
